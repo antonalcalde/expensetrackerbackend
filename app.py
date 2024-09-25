@@ -65,7 +65,6 @@ def get_all_expenses():
 
 @app.route('/expenses', methods=['POST'])
 def add_expense():
-    print("Request data:", request.data)  # Add this line
     try:
         data = request.get_json()
         if not data:
@@ -75,7 +74,7 @@ def add_expense():
         
         expense = {
             'title': data['title'],
-            'amount': data['amount'],
+            'amount': float(data['amount']),  # Convert amount to float
             'category': data['category'],
             'date': datetime.utcnow(),
             'type': 'expense'
@@ -85,6 +84,8 @@ def add_expense():
         print("Insert result:", result)
         
         if result.acknowledged:
+            # Update the amount field in the MongoDB documents
+            mongo.db.data.update_many({'type': 'expense'}, {'$inc': {'amount': float(data['amount'])}})
             return jsonify({'id': str(result.inserted_id)}), 201
         else:
             return jsonify({'error': 'Failed to insert expense'}), 500
